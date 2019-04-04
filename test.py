@@ -3,7 +3,6 @@ import os
 from random import shuffle
 import numpy as np
 from sklearn import svm
-import sklearn
 
 # C:误差项惩罚参数,对误差的容忍程度。C越大，越不能容忍误差
 # gamma：选择RBF函数作为kernel，越大，支持的向量越少；越小，支持的向量越多
@@ -110,32 +109,26 @@ def getData(mfcc_feature_num=16):
 #             print('best_mfcc_feature_num', best_mfcc_feature_num)
 #             print()
 
+
 # print('best_acc', best_acc)
 # print('best_C', best_C)
 # print('best_mfcc_feature_num', best_mfcc_feature_num)
 # print()
-datafeature, datalabel = getData(48)
-classfier = svm.SVC(
-    decision_function_shape='ovo',
-    kernel='rbf',
-    C=10,
-    gamma=0.0001,
-    probability=True)
-train_data = datafeature[:1175, :]
-train_label = datalabel[:1175]
-sample_data = datafeature[1175:, :]
-sample_label = datalabel[1175:]
+def classFit(classfier):
 
-classfier.fit(train_data, train_label)
+    datafeature, datalabel = getData(48)
+    classfier = svm.SVC(
+        decision_function_shape='ovo',
+        kernel='rbf',
+        C=10,
+        gamma=0.0001,
+        probability=True)
+    train_data = datafeature[:, :]
+    train_label = datalabel[:]
 
-# # samples = np.array(zip(train_data, train_label))
-# for sample in samples:
-#     print('sample{},probs:{}'.format(sample,
-#                                   classfier.predict_proba([sample])(0)))
-for test_x, test_y in zip(train_data, train_label):
-    # print('test_x{},test_y{},probs:{}'.format(
-    #     test_x, test_y,
-    #     classfier.predict_proba([test_x])[0]))
-    print(test_y)
-    print(classfier.predict_proba([test_x]))
-    print()
+    classfier.fit(train_data, train_label)
+
+    # for test_x, test_y in zip(train_data, train_label):
+    #     print(test_y)
+    #     print(classfier.predict_proba([test_x]))
+    #     print()

@@ -6,6 +6,7 @@ from datetime import datetime
 from pyaudio import PyAudio, paInt16
 import librosa
 from sklearn import svm
+from test import getData
 
 
 class Audioer(object):
@@ -21,7 +22,7 @@ class Audioer(object):
         # 声音记录的最小长度：save_length*num_samples
         self.save_length = 8
         # 记录时间，s
-        self.time_count = 60
+        self.time_count = 10
 
         self.voice_string = []
 
@@ -91,5 +92,39 @@ class Audioer(object):
 
 if __name__ == '__main__':
     r = Audioer()
-    r.read_audio()
-    r.save_wave("./test.wav")
+    audio = r.read_audio()
+    now = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+    path = now + ".wav"
+    r.save_wave(path)
+    # 提取声音特征
+    y, sr = librosa.load(path)
+
+    mfcc_feature = librosa.feature.mfcc(y, sr, n_mfcc=16)
+    zcr_feature = librosa.feature.zero_crossing_rate(y)
+    energy_feature = librosa.feature.rmse(y)
+    rms_feature = librosa.feature.rmse(y)
+
+    mfcc_feature = mfcc_feature.T.flatten()[:48]
+    zcr_feature = zcr_feature.flatten()
+    energy_feature = energy_feature.flatten()
+    rms_feature = rms_feature.flatten()
+
+    zcr_feature = np.array([np.mean(zcr_feature)])
+    energy_feature = np.array([np.mean(energy_feature)])
+    rms_feature = np.array([np.mean(rms_feature)])
+
+    data_feature = np.concatenate((mfcc_feature, zcr_feature, energy_feature,
+                                   rms_feature))
+
+    # 使用svm进行预测
+    classfier = svm.SVC(
+        decision_function_shape='ovo',
+        kernel='rbf',
+        C=10,
+        gamma=0.0001,
+        probability=True)
+    train_data, train_labels = getData(48)
+    # 训练模型
+    classfier.fit(train_data, train_labels)
+    print(classfier.predict([data_feature]))
+    print(classfier.predict_proba([data_feature]))
