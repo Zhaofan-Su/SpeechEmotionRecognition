@@ -1,6 +1,4 @@
-import os
 import numpy as np
-import sys
 import wave
 from datetime import datetime
 from pyaudio import PyAudio, paInt16
