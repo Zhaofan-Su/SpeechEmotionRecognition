@@ -22,6 +22,31 @@ EMOTION_LABEL = {
 }
 
 
+def getFeature(path, mfcc_feature_num=16):
+    y, sr = librosa.load(path)
+
+    # 对于每一个音频文件提取其mfcc特征
+    # y:音频时间序列;
+    # n_mfcc:要返回的MFCC数量
+    mfcc_feature = librosa.feature.mfcc(y, sr, n_mfcc=16)
+    zcr_feature = librosa.feature.zero_crossing_rate(y)
+    energy_feature = librosa.feature.rmse(y)
+    rms_feature = librosa.feature.rmse(y)
+
+    mfcc_feature = mfcc_feature.T.flatten()[:mfcc_feature_num]
+    zcr_feature = zcr_feature.flatten()
+    energy_feature = energy_feature.flatten()
+    rms_feature = rms_feature.flatten()
+
+    zcr_feature = np.array([np.mean(zcr_feature)])
+    energy_feature = np.array([np.mean(energy_feature)])
+    rms_feature = np.array([np.mean(rms_feature)])
+
+    data_feature = np.concatenate((mfcc_feature, zcr_feature, energy_feature,
+                                   rms_feature))
+    return data_feature
+
+
 def getData(mfcc_feature_num=16):
     """找到数据集中的所有语音文件的特征以及语音的情感标签"""
     wav_file_path = []
@@ -48,28 +73,26 @@ def getData(mfcc_feature_num=16):
     data_labels = []
 
     for wav_file in wav_file_path:
-        y, sr = librosa.load(wav_file)
+        # y, sr = librosa.load(wav_file)
 
-        # 对于每一个音频文件提取其mfcc特征
-        # y:音频时间序列;
-        # n_mfcc:要返回的MFCC数量
-        mfcc_feature = librosa.feature.mfcc(y, sr, n_mfcc=16)
-        zcr_feature = librosa.feature.zero_crossing_rate(y)
-        energy_feature = librosa.feature.rmse(y)
-        rms_feature = librosa.feature.rmse(y)
+        # # 对于每一个音频文件提取其mfcc特征
+        # # y:音频时间序列;
+        # # n_mfcc:要返回的MFCC数量
+        # mfcc_feature = librosa.feature.mfcc(y, sr, n_mfcc=16)
+        # zcr_feature = librosa.feature.zero_crossing_rate(y)
+        # energy_feature = librosa.feature.rmse(y)
+        # rms_feature = librosa.feature.rmse(y)
 
-        mfcc_feature = mfcc_feature.T.flatten()[:mfcc_feature_num]
-        zcr_feature = zcr_feature.flatten()
-        energy_feature = energy_feature.flatten()
-        rms_feature = rms_feature.flatten()
+        # mfcc_feature = mfcc_feature.T.flatten()[:mfcc_feature_num]
+        # zcr_feature = zcr_feature.flatten()
+        # energy_feature = energy_feature.flatten()
+        # rms_feature = rms_feature.flatten()
 
-        zcr_feature = np.array([np.mean(zcr_feature)])
-        energy_feature = np.array([np.mean(energy_feature)])
-        rms_feature = np.array([np.mean(rms_feature)])
+        # zcr_feature = np.array([np.mean(zcr_feature)])
+        # energy_feature = np.array([np.mean(energy_feature)])
+        # rms_feature = np.array([np.mean(rms_feature)])
 
-        data_feature.append(
-            np.concatenate((mfcc_feature, zcr_feature, energy_feature,
-                            rms_feature)))
+        data_feature.append(getFeature(wav_file, mfcc_feature_num))
         data_labels.append(int(EMOTION_LABEL[wav_file.split('\\')[-2]]))
 
     return np.array(data_feature), np.array(data_labels)
@@ -109,26 +132,21 @@ def getData(mfcc_feature_num=16):
 #             print('best_mfcc_feature_num', best_mfcc_feature_num)
 #             print()
 
-
 # print('best_acc', best_acc)
 # print('best_C', best_C)
 # print('best_mfcc_feature_num', best_mfcc_feature_num)
 # print()
-def classFit(classfier):
 
-    datafeature, datalabel = getData(48)
+
+def train():
+    # 使用svm进行预测
     classfier = svm.SVC(
         decision_function_shape='ovo',
         kernel='rbf',
         C=10,
         gamma=0.0001,
         probability=True)
-    train_data = datafeature[:, :]
-    train_label = datalabel[:]
-
-    classfier.fit(train_data, train_label)
-
-    # for test_x, test_y in zip(train_data, train_label):
-    #     print(test_y)
-    #     print(classfier.predict_proba([test_x]))
-    #     print()
+    train_data, train_labels = getData(48)
+    # 训练模型
+    classfier.fit(train_data, train_labels)
+    return classfier
