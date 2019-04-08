@@ -3,6 +3,7 @@ import os
 from random import shuffle
 import numpy as np
 from sklearn import svm
+from sklearn.externals import joblib
 
 # C:误差项惩罚参数,对误差的容忍程度。C越大，越不能容忍误差
 # gamma：选择RBF函数作为kernel，越大，支持的向量越少；越小，支持的向量越多
@@ -73,69 +74,11 @@ def getData(mfcc_feature_num=16):
     data_labels = []
 
     for wav_file in wav_file_path:
-        # y, sr = librosa.load(wav_file)
-
-        # # 对于每一个音频文件提取其mfcc特征
-        # # y:音频时间序列;
-        # # n_mfcc:要返回的MFCC数量
-        # mfcc_feature = librosa.feature.mfcc(y, sr, n_mfcc=16)
-        # zcr_feature = librosa.feature.zero_crossing_rate(y)
-        # energy_feature = librosa.feature.rmse(y)
-        # rms_feature = librosa.feature.rmse(y)
-
-        # mfcc_feature = mfcc_feature.T.flatten()[:mfcc_feature_num]
-        # zcr_feature = zcr_feature.flatten()
-        # energy_feature = energy_feature.flatten()
-        # rms_feature = rms_feature.flatten()
-
-        # zcr_feature = np.array([np.mean(zcr_feature)])
-        # energy_feature = np.array([np.mean(energy_feature)])
-        # rms_feature = np.array([np.mean(rms_feature)])
 
         data_feature.append(getFeature(wav_file, mfcc_feature_num))
         data_labels.append(int(EMOTION_LABEL[wav_file.split('\\')[-2]]))
 
     return np.array(data_feature), np.array(data_labels)
-
-
-# best_acc = 0
-# best_mfcc_feature_num = 0
-# best_C = 0
-# for C in range(10, 15):
-#     for i in range(45, 50):
-#         data_feature, data_labels = getData(i)
-#         split_num = 1100
-#         train_data = data_feature[:split_num, :]
-#         train_label = data_labels[:split_num]
-#         test_data = data_feature[split_num:, :]
-#         test_label = data_labels[split_num:]
-#         clf = svm.SVC(
-#             decision_function_shape='ovo', kernel='rbf', C=C, gamma=0.0001)
-#         clf.fit(train_data, train_label)
-#         print('Train Over')
-#         print(C, i)
-#         acc_dict = {}
-#         for test_x, test_y in zip(test_data, test_label):
-#             pre = clf.predict([test_x])[0]
-#             if pre in acc_dict.keys():
-#                 continue
-#             acc_dict[pre] = test_y
-#         acc = sklearn.metrics.accuracy_score(
-#             clf.predict(test_data), test_label)
-#         if acc > best_acc:
-#             best_acc = acc
-#             best_C = C
-#             best_mfcc_feature_num = i
-#             print()
-#             print('best_acc', best_acc)
-#             print('best_C', best_C)
-#             print('best_mfcc_feature_num', best_mfcc_feature_num)
-#             print()
-
-# print('best_acc', best_acc)
-# print('best_C', best_C)
-# print('best_mfcc_feature_num', best_mfcc_feature_num)
-# print()
 
 
 def train():
@@ -149,4 +92,9 @@ def train():
     train_data, train_labels = getData(48)
     # 训练模型
     classfier.fit(train_data, train_labels)
-    return classfier
+    # 保存模型
+    joblib.dump(classfier, 'classfier.m')
+
+
+if __name__ == "__main__":
+    train()

@@ -3,7 +3,8 @@ import wave
 from datetime import datetime
 from pyaudio import PyAudio, paInt16
 from leidatu import ratio_pic
-from test import train, getFeature
+from train import getFeature
+from sklearn.externals import joblib
 
 
 class Audioer(object):
@@ -89,7 +90,7 @@ class Audioer(object):
 
 if __name__ == '__main__':
 
-    classfier = train()
+    classfier = joblib.load('classfier.m')
     r = Audioer()
     if classfier:
         while True:
