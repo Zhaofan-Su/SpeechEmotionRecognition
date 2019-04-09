@@ -30,4 +30,7 @@ def ratio_pic(data):
     ax.set_rlim(0, 1)
 
     ax.grid(True)
+    plt.ion()
     plt.show()
+    plt.pause(4)
+    plt.close()

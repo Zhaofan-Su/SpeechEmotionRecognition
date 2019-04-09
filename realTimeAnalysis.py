@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import wave
 from datetime import datetime
@@ -100,7 +101,7 @@ if __name__ == '__main__':
             r.save_wave(path)
             # 提取声音特征
             data_feature = getFeature(path, 48)
-
+            os.remove(path)
             print(classfier.predict([data_feature]))
             print(classfier.predict_proba([data_feature]))
             ratio_pic(classfier.predict_proba([data_feature])[0])
