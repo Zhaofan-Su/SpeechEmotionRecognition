@@ -4,6 +4,7 @@ from random import shuffle
 import numpy as np
 from sklearn import svm
 from sklearn.externals import joblib
+import sklearn
 
 # C:误差项惩罚参数,对误差的容忍程度。C越大，越不能容忍误差
 # gamma：选择RBF函数作为kernel，越大，支持的向量越少；越小，支持的向量越多
@@ -83,17 +84,52 @@ def getData(mfcc_feature_num=16):
 
 def train():
     # 使用svm进行预测
-    classfier = svm.SVC(
-        decision_function_shape='ovo',
-        kernel='rbf',
-        C=10,
-        gamma=0.0001,
-        probability=True)
-    train_data, train_labels = getData(48)
-    # 训练模型
-    classfier.fit(train_data, train_labels)
-    # 保存模型
-    joblib.dump(classfier, 'classfier.m')
+    best_acc = 0
+    best_mfcc_feature_num = 0
+    best_C = 0
+
+    for C in range(13, 20):
+        for i in range(40, 55):
+            data_feature, data_labels = getData(i)
+            split_num = 200
+            train_data = data_feature[:split_num, :]
+            train_label = data_labels[:split_num]
+            test_data = data_feature[split_num:, :]
+            test_label = data_labels[split_num:]
+            clf = svm.SVC(
+                decision_function_shape='ovo',
+                kernel='rbf',
+                C=C,
+                gamma=0.0001,
+                probability=True)
+            print("train start")
+            clf.fit(train_data, train_label)
+            print("train over")
+            print(C, i)
+            acc_dict = {}
+            for test_x, test_y in zip(test_data, test_label):
+                pre = clf.predict([test_x])[0]
+                if pre in acc_dict.keys():
+                    continue
+                acc_dict[pre] = test_y
+            acc = sklearn.metrics.accuracy_score(
+                clf.predict(test_data), test_label)
+            if acc > best_acc:
+                best_acc = acc
+                best_C = C
+                best_mfcc_feature_num = i
+                print('best_acc', best_acc)
+                print('best_C', best_C)
+                print('best_mfcc_feature_num', best_mfcc_feature_num)
+                print()
+
+            # 保存模型
+            joblib.dump(clf,
+                        'Models/C_' + str(C) + '_mfccNum_' + str(i) + '.m')
+
+    print('best_acc', best_acc)
+    print('best_C', best_C)
+    print('best_mfcc_feature_num', best_mfcc_feature_num)
 
 
 if __name__ == "__main__":

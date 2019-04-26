@@ -3,9 +3,10 @@ import numpy as np
 import wave
 from datetime import datetime
 from pyaudio import PyAudio, paInt16
-from leidatu import ratio_pic
 from train import getFeature
 from sklearn.externals import joblib
+from drawRadar import draw
+import matplotlib.pyplot as plt
 
 
 class Audioer(object):
@@ -21,7 +22,7 @@ class Audioer(object):
         # 声音记录的最小长度：save_length*num_samples
         self.save_length = 8
         # 记录时间，s
-        self.time_count = 60
+        self.time_count = 10
 
         self.voice_string = []
 
@@ -90,10 +91,11 @@ class Audioer(object):
 
 
 if __name__ == '__main__':
-
     classfier = joblib.load('classfier.m')
-    r = Audioer()
+
     if classfier:
+        plt.ion()
+        r = Audioer()
         while True:
             audio = r.read_audio()
             now = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
@@ -104,7 +106,10 @@ if __name__ == '__main__':
             os.remove(path)
             print(classfier.predict([data_feature]))
             print(classfier.predict_proba([data_feature]))
-            ratio_pic(classfier.predict_proba([data_feature])[0])
+            labels = np.array(
+                ['angry', 'fear', 'happy', 'neutral', 'sad', 'surprise'])
+
+            draw(classfier.predict_proba([data_feature])[0], labels, 6)
 
     else:
         print("初始化失败")
